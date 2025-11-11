@@ -1360,7 +1360,19 @@ order(tab.Pthee.ii$vflujos.netos, decreasing = T)
 order(tab.Pthee.ii_med$vflujos.netos, decreasing = T)
 ```
 
-Se nota que el orden no ha cambiado.
+Se nota que el orden no ha cambiado y **Copenhagen** es la mejor opcion.
+
+## Promethee windows
+
+Otra alternativa para calcular el método PROMETHEE.
+
+```{r}
+prom_wind = multicriterio.metodo.promethee_windows(nueva.X, tab.fpref,
+                                                  pesos.criterios)
+prom_wind
+```
+
+El análisis realizado con PROMETHEE windows confirma los resultados obtenidos previamente con las otras versiones del método.
 
 Se conclude que segundo el metodo PROMETHEE, **Copenhagen** es la mejor opcion.
 
