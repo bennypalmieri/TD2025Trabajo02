@@ -1,0 +1,1371 @@
+---
+title: "Selección de la ciudad europea más sostenible para vivir"
+author: "Benedetta Palmieri"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    toc-depth: 3
+    colorlinks: true
+  html:
+    toc: true
+    number-sections: true
+    toc-depth: 3
+    theme: cosmo
+---
+
+# Presentación
+
+En la actualidad, las ciudades europeas afrontan el reto de avanzar hacia un desarrollo más sostenible, buscando un equilibrio entre el crecimiento económico, la protección del medio ambiente y el bienestar de sus habitantes. La sostenibilidad urbana se ha convertido, por tanto, en un tema clave de las políticas públicas y es un factor determinante en la calidad de vida de las personas.
+
+El objetivo de este trabajo es **evaluar y comparar el nivel de sostenibilidad de varias ciudades europeas**, con el fin de seleccionar aquella que puede considerarse la **más sostenible para vivir**. Para ello, se aplican diferentes **métodos de decisión multicriterio** (AHP, ELECTRE y PROMETHEE) que permiten ponderar factores ambientales, sociales y económicos.
+
+Los criterios utilizados se basan en indicadores objetivos y reconocidos a nivel internacional, obtenidos de la base de datos pública **Numbeo**, que ofrece información sobre coste de vida, poder adquisitivo, seguridad, calidad del sistema sanitario y nivel de contaminación en las principales ciudades del mundo.
+
+Este tema resulta relevante por su importancia social y ambiental en un contexto donde el cambio climatico y la calidad de vida son preocupaciones crecientes.
+
+Se seleccionaron cinco capitales europeas (Copenhague, Berlín, París, Madrid y Roma) por representar distintas zonas y realidades de Europa. Los seis criterios elegidos (Cost of Living, Rent, Purchasing Power, Safety, Health Care y Pollution) permiten evaluar de forma integral la sostenibilidad y la calidad de vida en cada ciudad.
+
+**Fuente de datos:**
+
+Los valores de los índices proceden de la base de datos Numbeo (consultada en inicio noviembre 2025). Es importante mencionar que los datos pueden variar ligeramente debido a las actualizaciones continuas: [https://www.numbeo.com](https://www.numbeo.com/){.uri}/
+
+**Criterios (indices) y alternativas (ciudades) consideradas:**
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(knitr)
+library(kableExtra)
+
+criterios <- data.frame(
+  Criterio = c("Cost of Living Index", "Rent Index", "Purchasing Power Index",
+               "Safety Index", "Health Care Index", "Pollution Index"),
+  `Escala` = c("IR", "IR", "IR", "0–100", "0–100", "0–100"),
+  Tipo = c("Costo (min)", "Costo (min)", "Beneficio (max)",
+           "Beneficio (max)", "Beneficio (max)", "Costo (min)"),
+  Interpretación = c(
+    "Mide el costo medio de bienes y servicios; valores altos indican ciudades más caras.",
+    "Refleja el nivel medio de los alquileres; valores altos significan alquileres más elevados.",
+    "Evalúa el poder adquisitivo medio en relación con los precios locales; valores altos indican mayor capacidad económica.",
+    "Representa la percepción de seguridad ciudadana; valores altos indican ciudades más seguras.",
+    "Evalúa la calidad percibida del sistema sanitario (acceso, competencia, infraestructura).",
+    "Mide el nivel de contaminación ambiental; valores altos implican peores condiciones medioambientales."
+  )
+)
+
+kable(criterios, booktabs = TRUE,
+      caption = "Criterios considerados, escala e interpretación") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                font_size = 9, full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(4, width = "8cm")
+
+```
+
+En escala orginal, IR indica indice relativo con base Nueva York = 100. Los criterios de costos son da minimizar, mientras que los de beneficios son da maximizar.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(knitr)
+library(kableExtra)
+
+datos <- data.frame(
+  City = c("Copenhagen","Berlin","Paris","Madrid","Rome"),
+  `Cost Living` = c(85.1,68.9,76.8,58.1,61.7),
+  `Rent` = c(48.0,37.1,45.5,38.5,35.4),
+  `Purchasing Pwr` = c(120.3,126.7,114.5,96.5,81.0),
+  `Safety` = c(74.3,55.5,42.0,71.3,52.6),
+  `Health Care` = c(76.7,66.7,76.9,79.9,64.9),
+  `Pollution` = c(22.1,38.4,63.5,37.7,48.9)
+)
+
+kable(datos, booktabs = TRUE, caption = "Datos de las ciudades para cada índice") %>%
+  kable_styling(latex_options = c("striped","hold_position"),
+                font_size = 9, full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:7, width = "2cm") %>%
+  row_spec(0, align='c', bold = TRUE)
+
+```
+
+**Representación gráfica** para observar las diferencias entre las ciudades de forma visual.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(ggplot2)
+
+df_long <- data.frame(
+  city = rep(c("Copenh.", "Berlin", "Paris", "Madrid", "Rome"), each = 3),
+  criterion = rep(c("Cost of Living", "Rent Index", "Purchasing Power Index"), times = 5),
+  value = c(
+    85.1, 48.0, 120.3,   # Copenhagen
+    68.9, 37.1, 126.7,   # Berlin
+    76.8, 45.5, 114.5,   # Paris
+    58.1, 38.5, 96.5,    # Madrid
+    61.7, 35.4, 81.0     # Rome
+  )
+)
+
+ggplot(df_long, aes(x = city, y = value, fill = criterion)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "red", linewidth = 1) +
+  labs(
+    title = "Comparación por los criterios en escala IR",
+    x = NULL,
+    y = "Valor índice"
+  ) +
+  theme_minimal(base_size = 13)
+
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+df_long <- data.frame(
+  city = rep(c("Copenh.", "Berlin", "Paris", "Madrid", "Rome"), each = 3),
+  criterion = rep(c("Safety Index", "Health Care Index", "Pollution Index"), times = 5),
+  value = c(
+    74.3, 76.7, 22.1,    # Copenhagen
+    55.5, 66.7, 38.4,    # Berlin
+    42.0, 76.9, 63.5,    # Paris
+    71.3, 79.9, 37.7,    # Madrid
+    52.6, 64.9, 48.9     # Rome
+  )
+)
+
+ggplot(df_long, aes(x = city, y = value, fill = criterion)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Comparación por los criterios en escala 0-100",
+    x = NULL,
+    y = "Valor índice"
+  ) +
+  theme_minimal(base_size = 13)
+
+```
+
+Transformo los criterios para que todos sean de **maximizar**, colocando un signo negativo delante de los valores que inicialmente correspondían a criterios de coste.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(knitr)
+library(kableExtra)
+
+datos <- data.frame(
+  City = c("Copenhagen","Berlin","Paris","Madrid","Rome"),
+  `Cost Living` = -c(85.1,68.9,76.8,58.1,61.7),
+  `Rent` = -c(48.0,37.1,45.5,38.5,35.4),
+  `Purchasing Pwr` = c(120.3,126.7,114.5,96.5,81.0),
+  `Safety` = c(74.3,55.5,42.0,71.3,52.6),
+  `Health Care` = c(76.7,66.7,76.9,79.9,64.9),
+  `Pollution` = -c(22.1,38.4,63.5,37.7,48.9)
+)
+
+kable(datos, booktabs = TRUE, caption = "Datos transformados a criterios de maximización") %>%
+  kable_styling(latex_options = c("striped","hold_position"),
+                font_size = 9, full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:7, width = "2cm") %>%
+  row_spec(0, align='c', bold = TRUE)
+```
+
+Normalizo los valores con el **método Nadir**, para que todos los criterios sean expresados en una escala común entre 0 y 1.
+
+```{r}
+X = matrix( c(-85.1, -68.9, -76.8, -58.1, -61.7, 
+              -48.0, -37.1, -45.5, -38.5, -35.4, 
+              120.3, 126.7, 114.5, 96.5, 81.0,
+              74.3, 55.5, 42.0, 71.3, 52.6,
+              76.7, 66.7, 76.9, 79.9, 64.9,
+              -22.1, -38.4, -63.5, -37.7, -48.9), nrow=5, ncol=6, byrow=F);
+colnames(X) = c('Cost of Living Index', 'Rent Index', 'Purchasing Power Index', 
+                'Safety Index', 'Health care Index', 'Pollution Index');
+rownames(X) = c('Copenhagen', 'Berlin', 'Paris', 'Madrid', 'Rome');
+
+vcol.max = apply(X,2,max)
+vcol.min = apply(X,2,min)
+
+m.vol.max = matrix(vcol.max,5,6,byrow=T)
+m.vol.min = matrix(vcol.min,5,6,byrow=T)
+
+nueva.X = (X-m.vol.min)/(m.vol.max-m.vol.min)
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(knitr)
+library(kableExtra)
+
+kable(nueva.X, booktabs = TRUE, caption = "Matriz de valores normalizados") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:7, width = "2cm") %>%
+  row_spec(0, align='c', bold = TRUE)
+
+```
+
+**Rapresentación grafica de los valores normalizados.**
+
+Los valores proximos a 1 indican un mejor comportamiento, mientras que los valores proximos a 0 representan un rendimiento mas bajo en el criterio correspondiente.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+nueva.X2 <- nueva.X
+colnames(nueva.X2) <- c("Cost", "Rent", "Power", "Safety", "Health", "Pollution")
+
+heatmap(
+  nueva.X2,
+  Rowv = NA, Colv = NA,
+  col = heat.colors(20),
+  scale = "none",
+  main = "Valores normalizados (0–1)",
+)
+```
+
+Se cargan los archivos que contienen las funciones necesarias para el análisis.
+
+```{r}
+source("teoriadecision_funciones_multicriterio.R")
+source("teoriadecision_funciones_multicriterio_diagram.R")
+source("teoriadecision_funciones_multicriterio_utiles.R")
+```
+
+# Metodo AHP
+
+## Resolución con las funciones
+
+Para construir las matrices de comparación entre las ciudades para cada criterio, se transformaron los valores de los índices de Numbeo a la escala de Saaty (1–9), asignando un valor entre 1 y 3 cuando la diferencia es moderada, 5 cuando es fuerte, y entre 7 y 9 cuando es muy fuerte o extrema.
+
+En la matriz de comparación entre los criterios, los valores asignados reflejan la importancia relativa de cada criterio según la escala de Saaty (1–9), considerando su relevancia en la evaluación de la sostenibilidad urbana.
+
+```{r}
+tb_criterios = multicriterio.crea.matrizvaloraciones_mej( 
+                              c(2, 1/2, 1/2, 1/2, 1/3, 
+                                1/3, 1/4, 1/4, 1/6, 
+                                1/2, 1/2, 1/2, 
+                                1, 1/2, 
+                                1),
+                              numalternativas = 6, 
+                              v.nombres.alternativas = 
+                                c('Cost of Living Index','Rent Index',
+                                  'Purchasing Power Index', 'Safety Index',
+                                  'Health care Index','Pollution Index')
+                              );
+
+tb_cost = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/3, 1/2, 1/5, 1/4,
+                        3, 1/3, 1/2, 
+                        1/4, 1/3,
+                        2),
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+
+tb_rent = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/3, 1/2, 1/3, 1/4,
+                        3, 2, 1/2, 
+                        1/2, 1/3,
+                        1/2), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+
+tb_purch = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/2, 2, 5, 6,
+                        3, 6, 7, 
+                        3, 5,
+                        2), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+tb_safety = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(4, 5, 2, 5,
+                        2, 1/3, 1, 
+                        1/3, 1/2,
+                        3),
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+
+tb_health = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(3,1,1/2,4,
+                        1/3,1/4,2,
+                        1/2,4,
+                        5), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+tb_pollution = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(3,7,3,5,
+                        5,1,3,
+                        1/5,1/3,
+                        2), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas =
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(knitr)
+library(kableExtra)
+
+kable(tb_criterios, booktabs = TRUE, caption = "Matriz de criterios") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:7, width = "1.5cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, align='c', bold = TRUE)
+
+kable(tb_cost, booktabs = TRUE, caption = "Matriz Cost Of Living Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+kable(tb_rent, booktabs = TRUE, caption = "Matriz Rent Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+kable(tb_purch, booktabs = TRUE, caption = "Matriz Purchasing Power Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+kable(tb_safety, booktabs = TRUE, caption = "Matriz Safety Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+kable(tb_health, booktabs = TRUE, caption = "Matriz Health Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+kable(tb_pollution, booktabs = TRUE, caption = "Matriz Pollution Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+```
+
+### Estudio de la inconsistencia
+
+```{r}
+Inc_criterios = multicriterio.metodoAHP.coef.inconsistencia(tb_criterios)
+c(Inc_criterios$mensaje, round(Inc_criterios$RI.coef.inconsistencia,4))
+
+Inc_cost = multicriterio.metodoAHP.coef.inconsistencia(tb_cost)
+c(Inc_cost$mensaje, round(Inc_cost$RI.coef.inconsistencia,4))
+
+Inc_rent = multicriterio.metodoAHP.coef.inconsistencia(tb_rent)
+c(Inc_rent$mensaje, round(Inc_rent$RI.coef.inconsistencia,4))
+
+Inc_purch = multicriterio.metodoAHP.coef.inconsistencia(tb_purch)
+c(Inc_purch$mensaje, round(Inc_purch$RI.coef.inconsistencia,4))
+
+Inc_safety = multicriterio.metodoAHP.coef.inconsistencia(tb_safety)
+c(Inc_safety$mensaje, round(Inc_safety$RI.coef.inconsistencia,4))
+
+Inc_health = multicriterio.metodoAHP.coef.inconsistencia(tb_health)
+c(Inc_health$mensaje, round(Inc_health$RI.coef.inconsistencia,4))
+
+Inc_pollution = multicriterio.metodoAHP.coef.inconsistencia(tb_pollution)
+c(Inc_pollution$mensaje, round(Inc_pollution$RI.coef.inconsistencia,4))
+
+```
+
+El estudio de la inconsistencia sirve para verificar la coherencia entre los juicios de las matrices AHP. En este caso, todos los coeficientes de inconsistencia son bajos y están por debajo de 0.1; por tanto los juicios pueden considerarse coherentes.
+
+### Pesos locales
+
+Cálculo de los **pesos locales** de los criterios entre sí y de las alternativas dentro de cada criterio.
+
+```{r}
+p_criterios = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+              tb_criterios)
+p_criterios$valoraciones.ahp
+
+p_cost = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_cost)
+p_cost$valoraciones.ahp
+
+p_rent = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_rent)
+p_rent$valoraciones.ahp
+
+p_purch = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+          tb_purch)
+p_purch$valoraciones.ahp
+
+p_safety = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+           tb_safety)
+p_safety$valoraciones.ahp
+
+p_health = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+           tb_health)
+p_health$valoraciones.ahp
+
+p_pollution = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+              tb_pollution)
+p_pollution$valoraciones.ahp
+```
+
+### Pesos globales
+
+Calculo de los **pesos globales**:
+
+```{r}
+p_global = multicriterio.metodoAHP.pesosglobales_entabla( 
+                p_criterios$valoraciones.ahp,
+                rbind(p_cost$valoraciones.ahp, p_rent$valoraciones.ahp,
+                      p_purch$valoraciones.ahp, p_safety$valoraciones.ahp,
+                      p_health$valoraciones.ahp, p_pollution$valoraciones.ahp)
+                      )
+p_global
+```
+
+Los pesos globales representan la importancia complesiva de cada alternativa con respecto al objectivo final.
+
+**Copenhagen** es la alternativa que presenta el major peso global, lo que indica que es la opción más favorable según el metodo AHP.
+
+### En forma de diagram
+
+```{r}
+matriznivel = array(NA, dim = c(5,5,6))
+matriznivel[,,1] = tb_cost
+matriznivel[,,2] = tb_rent
+matriznivel[,,3] = tb_purch
+matriznivel[,,4] = tb_safety
+matriznivel[,,5] = tb_health
+matriznivel[,,6] = tb_pollution
+dimnames(matriznivel)[[1]] = c("Copenhagen","Berlin","Paris","Madrid","Rome")
+dimnames(matriznivel)[[2]] = c("Copenhagen","Berlin","Paris","Madrid","Rome")
+
+multicriterio.metodoahp.diagrama(tb_criterios,matriznivel)
+```
+
+**Copenhagen** es la alternativa que presenta el major peso global, lo que indica que es la opción más favorable según el metodo AHP.
+
+## Resolución con paquete AHP
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+modelo01 = '
+Version: 2.0
+
+Alternatives: &alternatives
+  Copenhagen:
+  Berlin:
+  Paris:
+  Madrid:
+  Rome:
+
+Goal:
+  name: Elegir la ciudad europea más sostenible para vivir
+  preferences:
+    pairwise:
+      - [Cost of Living Index, Rent Index, 2]
+      - [Cost of Living Index, Purchasing Power Index, 1/2]
+      - [Cost of Living Index, Safety Index, 1/2]
+      - [Cost of Living Index, Health care Index, 1/2]
+      - [Cost of Living Index, Pollution Index, 1/3]
+      - [Rent Index, Purchasing Power Index, 1/3]
+      - [Rent Index, Safety Index, 1/4]
+      - [Rent Index, Health care Index, 1/4]
+      - [Rent Index, Pollution Index, 1/6]
+      - [Purchasing Power Index, Safety Index, 1/2]
+      - [Purchasing Power Index, Health care Index, 1/2]
+      - [Purchasing Power Index, Pollution Index, 1/2]
+      - [Safety Index, Health care Index, 1]
+      - [Safety Index, Pollution Index, 1/2]
+      - [Health care Index, Pollution Index, 1]
+
+  children:
+    Cost of Living Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/3]
+          - [Copenhagen, Paris, 1/2]
+          - [Copenhagen, Madrid, 1/5]
+          - [Copenhagen, Rome, 1/4]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 1/3]
+          - [Berlin, Rome, 1/2]
+          - [Paris, Madrid, 1/4]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+
+    Rent Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/3]
+          - [Copenhagen, Paris, 1/2]
+          - [Copenhagen, Madrid, 1/3]
+          - [Copenhagen, Rome, 1/4]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 2]
+          - [Berlin, Rome, 1/2]
+          - [Paris, Madrid, 1/2]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 1/2]
+      children: *alternatives
+
+    Purchasing Power Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/2]
+          - [Copenhagen, Paris, 2]
+          - [Copenhagen, Madrid, 5]
+          - [Copenhagen, Rome, 6]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 6]
+          - [Berlin, Rome, 7]
+          - [Paris, Madrid, 3]
+          - [Paris, Rome, 5]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+
+    Safety Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 4]
+          - [Copenhagen, Paris, 5]
+          - [Copenhagen, Madrid, 2]
+          - [Copenhagen, Rome, 5]
+          - [Berlin, Paris, 2]
+          - [Berlin, Madrid, 1/3]
+          - [Berlin, Rome, 1]
+          - [Paris, Madrid, 1/3]
+          - [Paris, Rome, 1/2]
+          - [Madrid, Rome, 3]
+      children: *alternatives
+
+    Health care Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 3]
+          - [Copenhagen, Paris, 1]
+          - [Copenhagen, Madrid, 1/2]
+          - [Copenhagen, Rome, 4]
+          - [Berlin, Paris, 1/3]
+          - [Berlin, Madrid, 1/4]
+          - [Berlin, Rome, 2]
+          - [Paris, Madrid, 1/2]
+          - [Paris, Rome, 4]
+          - [Madrid, Rome, 5]
+      children: *alternatives
+
+    Pollution Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 3]
+          - [Copenhagen, Paris, 7]
+          - [Copenhagen, Madrid, 3]
+          - [Copenhagen, Rome, 5]
+          - [Berlin, Paris, 5]
+          - [Berlin, Madrid, 1]
+          - [Berlin, Rome, 3]
+          - [Paris, Madrid, 1/5]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+'
+writeLines(modelo01, "ej01_ahp.ahp")
+
+```
+
+```{r}
+library(ahp)
+ahp_ej = ahp::Load("ej01_ahp.ahp")
+ahp_ej
+
+# Calcular las prioridades
+Calculate(ahp_ej)
+print(ahp_ej, priority = function(x) x$parent$priority["Total", x$name])
+
+# Visualizar la jerarquía
+Visualize(ahp_ej)
+
+# Analizar
+Analyze(ahp_ej,variable = "priority" )
+Analyze(ahp_ej)
+
+# Analizar con Tabla Mejorada
+aa = AnalyzeTable(ahp_ej)
+formattable::as.htmlwidget(aa)
+
+aab = AnalyzeTable(ahp_ej,variable = "priority")
+formattable::as.htmlwidget(aab)
+
+```
+
+Los resultados del método AHP muestran que los criterios con mayor peso global son el Pollution Index (29.1%), el Health Care Index (22.6%) y el Safety Index (20.3%), lo que indica que los aspectos ambientales y sociales tienen una influencia más fuerte en la decisión que los factores puramente económicos.
+
+En cuanto a las alternativas, la ciudad con mayor peso global es **Copenhagen (32.9%)**, seguida de Madrid (25.3%) y Berlín (19.1%). París (11.6%) y Roma (11.0%) se sitúan en las últimas posiciones.
+
+Estos resultados reflejan que Copenhagen destaca por su bajo nivel de contaminación, alta seguridad y buena calidad del sistema sanitario, compensando su mayor coste de vida.
+
+Las inconsistencias de todas las matrices se mantienen por debajo del umbral de 0.1, lo que confirma la coherencia de los juicios emitidos.
+
+\newpage
+
+# Metodo AHP - MULTINIVEL
+
+Dado que el **"Cost of Living Index"** incluye dos componentes principales:
+
+-   **"Groceries Index"**: evalúa el costo de los productos de supermercado en una ciudad en comparación con Nueva York.
+
+-   **"Restaurants Index"**: compara los precios de comidas y bebidas en restaurantes y bares entre una ciudad y Nueva York, reflejando el gasto al comer fuera.
+
+(En ambos casos se utiliza el índice IR relativo y ambos son costes que deben minimizarse)
+
+Por esta razón, transformo el ejercicio **AHP** en un **AHP multinivel**, incorporando estos dos subcriterios dentro del criterio principal Cost of Living Index.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(knitr)
+library(kableExtra)
+
+city_data <- data.frame(
+  CITY = c("Copenh.", "Berlin", "Paris", "Madrid", "Rome"),
+  `Cost Living` = c(85.1, 68.9, 76.8, 58.1, 61.7),
+  `Grocery`        = c(75.4, 60.7, 75.6, 53.0, 62.8),
+  `Restaurant`     = c(101.6, 67.2, 70.8, 60.8, 62.9),
+  `Rent`           = c(48.0, 37.1, 45.5, 38.5, 35.4),
+  `Purch Pwr` = c(120.3, 126.7, 114.5, 96.5, 81.0),
+  `Safety`         = c(74.3, 55.5, 42.0, 71.3, 52.6),
+  `Health care`    = c(76.7, 66.7, 76.9, 79.9, 64.9),
+  `Pollution`      = c(22.1, 38.4, 63.5, 37.7, 48.9)
+)
+
+
+kable(city_data, booktabs = TRUE,
+      caption = "Datos de la ciudades para cada indice") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                font_size = 9, full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE, width = "1.3cm") %>%
+  column_spec(2:4, width = "1.5cm") %>%
+  column_spec(5, width = "1.2cm") %>%
+  column_spec(6:7, width = "1.5cm") %>%
+  row_spec(0, bold = TRUE)
+
+
+```
+
+Transformo los criterios para que todos sean de **maximizar**, colocando un signo negativo delante de los valores que inicialmente correspondían a criterios de costo.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(knitr)
+library(kableExtra)
+
+city_data <- data.frame(
+  CITY = c("Copenh.", "Berlin", "Paris", "Madrid", "Rome"),
+  `Cost Living`    = -c(85.1, 68.9, 76.8, 58.1, 61.7),
+  `Grocery`        = -c(75.4, 60.7, 75.6, 53.0, 62.8),
+  `Restaurant`     = -c(101.6, 67.2, 70.8, 60.8, 62.9),
+  `Rent`           = -c(48.0, 37.1, 45.5, 38.5, 35.4),
+  `Purch Pwr` = c(120.3, 126.7, 114.5, 96.5, 81.0),
+  `Safety`         = c(74.3, 55.5, 42.0, 71.3, 52.6),
+  `Health care`    = c(76.7, 66.7, 76.9, 79.9, 64.9),
+  `Pollution`      = -c(22.1, 38.4, 63.5, 37.7, 48.9)
+)
+
+
+kable(city_data, booktabs = TRUE,
+      caption = "Datos transformados a criterios de maximización") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                font_size = 9, full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE, width = "1.3cm") %>%
+  column_spec(2:4, width = "1.5cm") %>%
+  column_spec(5, width = "1.2cm") %>%
+  column_spec(6:7, width = "1.5cm") %>%
+  row_spec(0, bold = TRUE)
+
+
+```
+
+Normalizo los valores con el **método Nadir**, para que todos los criterios sean expresados en una escala común entre 0 y 1.
+
+```{r}
+X = matrix( c(-85.1, -68.9, -76.8, -58.1, -61.7, 
+              -75.4, -60.7, -75.6, -53.0, -62.8,
+              -101.6, -67.2, -70.8, -60.8, -62.9,
+              -48.0, -37.1, -45.5, -38.5, -35.4, 
+              120.3, 126.7, 114.5, 96.5, 81.0,
+              74.3, 55.5, 42.0, 71.3, 52.6,
+              76.7, 66.7, 76.9, 79.9, 64.9,
+              -22.1, -38.4, -63.5, -37.7, -48.9), nrow=5, ncol=8, byrow=F);
+colnames(X) = c('Cost of Living Index', 'Grocery Index', 'Restaurant Index', 
+                'Rent Index', 'Purchasing Power Index', 'Safety Index', 
+                'Health care Index', 'Pollution Index');
+rownames(X) = c('Copenhagen', 'Berlin', 'Paris', 'Madrid', 'Rome');
+
+vcol.max = apply(X,2,max)
+vcol.min = apply(X,2,min)
+
+m.vol.max = matrix(vcol.max,5,8,byrow=T)
+m.vol.min = matrix(vcol.min,5,8,byrow=T)
+
+nueva.X.ml = (X-m.vol.min)/(m.vol.max-m.vol.min)
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(knitr)
+library(kableExtra)
+
+kable(nueva.X.ml, booktabs = TRUE, caption = "Matriz de valores normalizados") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1, bold = TRUE, width = "1.3cm") %>%
+  column_spec(2:9, width = "1.4cm") %>%
+  row_spec(0, bold = TRUE)
+```
+
+**Representación grafica**
+
+```{r}
+nueva.X2.ml <- nueva.X.ml
+colnames(nueva.X2.ml) <- c("Cost Living", "Grocery", "Restaurant", 
+                           "Rent", "Power", "Safety", "Health", "Pollution")
+
+heatmap(
+  nueva.X2.ml,
+  Rowv = NA, Colv = NA,
+  col = heat.colors(20),
+  scale = "none",
+  main = "Valores normalizados (0–1)",
+)
+```
+
+## Resolución con las funciones
+
+Se reutiliza parte del código utilizado en el metodo AHP (versión no multinivel), presentandolo de forma más compacta y omitiendo la impresión y las comprobaciones ya realizadas en la sección anterior.
+
+```{r}
+tb_criterios = multicriterio.crea.matrizvaloraciones_mej( 
+                              c(2, 1/2, 1/2, 1/2, 1/3, 
+                                1/3, 1/4, 1/4, 1/6, 
+                                1/2, 1/2, 1/2, 
+                                1, 1/2, 
+                                1),
+                              numalternativas = 6, 
+                              v.nombres.alternativas = 
+                                c('Cost of Living Index', 'Rent Index',
+                                  'Purchasing Power Index', 'Safety Index', 
+                                 'Health care Index','Pollution Index')
+                                );
+
+tb_cost = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/3, 1/2, 1/5, 1/4,
+                        3, 1/3, 1/2, 
+                        1/4, 1/3,
+                        2),
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+
+tb_rent = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/3, 1/2, 1/3, 1/4,
+                        3, 2, 1/2, 
+                        1/2, 1/3,
+                        1/2), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+
+tb_purch = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/2, 2, 5, 6,
+                        3, 6, 7, 
+                        3, 5,
+                        2), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+tb_safety = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(4, 5, 2, 5,
+                        2, 1/3, 1, 
+                        1/3, 1/2,
+                        3),
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+
+tb_health = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(3,1,1/2,4,
+                        1/3,1/4,2,
+                        1/2,4,
+                        5), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+tb_pollution = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(3,7,3,5,
+                        5,1,3,
+                        1/5,1/3,
+                        2), 
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+# pesos locales
+p_criterios = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+                                                            tb_criterios)
+p_cost = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_cost)
+p_rent = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_rent)
+p_purch = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_purch)
+p_safety = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_safety)
+p_health = multicriterio.metodoAHP.variante1.autovectormayorautovalor(tb_health)
+p_pollution = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+                                                            tb_pollution)
+
+```
+
+A continuación, se incorporan los datos necesarios para el **caso multinivel** del método AHP.
+
+Tablas de los **subcriterios**:
+
+```{r}
+tb_subcriterios = multicriterio.crea.matrizvaloraciones_mej( 
+                              c(2),
+                              numalternativas = 2, 
+                              v.nombres.alternativas = c('Groceries Index', 
+                              'Restaurants Index')
+                              );
+
+tb_grocery = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/3, 1, 1/5, 1/3,
+                        3, 1/3, 1, 
+                        1/5, 1/3,
+                        3),
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+
+tb_restaurant = multicriterio.crea.matrizvaloraciones_mej( 
+                      c(1/5, 1/4, 1/7, 1/6,
+                        2, 1/3, 1/2, 
+                        1/4, 1/3,
+                        2),
+                      numalternativas = 5, 
+                      v.nombres.alternativas = 
+                      c("Copenhagen","Berlin", "Paris", "Madrid", "Rome"));
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(knitr)
+library(kableExtra)
+
+kable(tb_subcriterios, booktabs = TRUE, caption = "Matriz de subcriterios") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:2, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, align='c', bold = TRUE)
+
+kable(tb_grocery, booktabs = TRUE, caption = "Matriz Groceries Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+
+kable(tb_restaurant, booktabs = TRUE, caption = "Matriz Restaurant Index") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE, font_size = 9, position = "center") %>%
+  column_spec(1:5, width = "2cm") %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE)
+```
+
+**Estudio de la inconsistencia:**
+
+```{r}
+Inc_subcriterios = multicriterio.metodoAHP.coef.inconsistencia(tb_subcriterios)
+
+Inc_grocery = multicriterio.metodoAHP.coef.inconsistencia(tb_grocery)
+c(Inc_grocery$mensaje, round(Inc_grocery$RI.coef.inconsistencia,4))
+
+Inc_restaurant = multicriterio.metodoAHP.coef.inconsistencia(tb_restaurant)
+c(Inc_restaurant$mensaje, round(Inc_restaurant$RI.coef.inconsistencia,4))
+
+```
+
+Calculo de los **pesos locales**:
+
+```{r}
+p_subcriterios = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+                 tb_subcriterios)
+p_subcriterios$valoraciones.ahp
+
+p_grocery = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+            tb_grocery)
+p_grocery$valoraciones.ahp
+
+p_restaurant = multicriterio.metodoAHP.variante1.autovectormayorautovalor(
+               tb_restaurant)
+p_restaurant$valoraciones.ahp
+```
+
+Calculo de los **pesos globales**:
+
+```{r}
+pc <- p_criterios$valoraciones.ahp # pesos criterios
+ps <- p_subcriterios$valoraciones.ahp # pesos subcriterios
+
+p_hojas <- c(
+  "Groceries Index" = pc["Cost of Living Index"] * ps["Groceries Index"],
+  "Restaurants Index" = pc["Cost of Living Index"] * ps["Restaurants Index"],
+  "Rent Index"  = pc["Rent Index"],
+  "Purchasing Power Index" = pc["Purchasing Power Index"],
+  "Safety Index" = pc["Safety Index"],
+  "Health care Index" = pc["Health care Index"],
+  "Pollution Index" = pc["Pollution Index"]
+)
+
+M_alt_hojas <- rbind(
+  p_grocery$valoraciones.ahp,
+  p_restaurant$valoraciones.ahp,  
+  p_rent$valoraciones.ahp,
+  p_purch$valoraciones.ahp,
+  p_safety$valoraciones.ahp,
+  p_health$valoraciones.ahp,
+  p_pollution$valoraciones.ahp
+)
+rownames(M_alt_hojas) <- names(p_hojas)
+
+#pond.globales = p_hojas %*% M_alt_hojas
+#pond.globales
+
+p_global <- multicriterio.metodoAHP.pesosglobales_entabla(p_hojas, M_alt_hojas)
+p_global
+```
+
+Los resultados del AHP multinivel muestran que, al incorporar los subcriterios dentro de “Cost of Living”, las prioridades globales se mantienen estables y **Copenhagen** sigue siendo la alternativa con el mayor peso total.
+
+## Resolución con paquete AHP
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+modelo02 = '
+Version: 2.0
+
+Alternatives: &alternatives
+  Copenhagen:
+  Berlin:
+  Paris:
+  Madrid:
+  Rome:
+
+Goal:
+  name: Elegir la ciudad europea más sostenible para vivir
+  preferences:
+    pairwise:
+      - [Cost of Living Index, Rent Index, 2]
+      - [Cost of Living Index, Purchasing Power Index, 1/2]
+      - [Cost of Living Index, Safety Index, 1/2]
+      - [Cost of Living Index, Health care Index, 1/2]
+      - [Cost of Living Index, Pollution Index, 1/3]
+      - [Rent Index, Purchasing Power Index, 1/3]
+      - [Rent Index, Safety Index, 1/4]
+      - [Rent Index, Health care Index, 1/4]
+      - [Rent Index, Pollution Index, 1/6]
+      - [Purchasing Power Index, Safety Index, 1/2]
+      - [Purchasing Power Index, Health care Index, 1/2]
+      - [Purchasing Power Index, Pollution Index, 1/2]
+      - [Safety Index, Health care Index, 1]
+      - [Safety Index, Pollution Index, 1/2]
+      - [Health care Index, Pollution Index, 1]
+
+  children:
+
+    Cost of Living Index:
+      preferences:
+        pairwise:
+          - [Groceries Index, Restaurants Index, 2]
+      children:
+
+        Groceries Index:
+          preferences:
+            pairwise:
+              - [Copenhagen, Berlin, 1/3]
+              - [Copenhagen, Paris, 1]
+              - [Copenhagen, Madrid, 1/5]
+              - [Copenhagen, Rome, 1/3]
+              - [Berlin, Paris, 3]
+              - [Berlin, Madrid, 1/3]
+              - [Berlin, Rome, 1]
+              - [Paris, Madrid, 1/5]
+              - [Paris, Rome, 1/3]
+              - [Madrid, Rome, 3]
+          children: *alternatives
+
+        Restaurants Index:
+          preferences:
+            pairwise:
+              - [Copenhagen, Berlin, 1/5]
+              - [Copenhagen, Paris, 1/4]
+              - [Copenhagen, Madrid, 1/7]
+              - [Copenhagen, Rome, 1/6]
+              - [Berlin, Paris, 2]
+              - [Berlin, Madrid, 1/3]
+              - [Berlin, Rome, 1/2]
+              - [Paris, Madrid, 1/4]
+              - [Paris, Rome, 1/3]
+              - [Madrid, Rome, 2]
+          children: *alternatives
+
+    Rent Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/3]
+          - [Copenhagen, Paris, 1/2]
+          - [Copenhagen, Madrid, 1/3]
+          - [Copenhagen, Rome, 1/4]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 2]
+          - [Berlin, Rome, 1/2]
+          - [Paris, Madrid, 1/2]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 1/2]
+      children: *alternatives
+
+    Purchasing Power Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/2]
+          - [Copenhagen, Paris, 2]
+          - [Copenhagen, Madrid, 5]
+          - [Copenhagen, Rome, 6]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 6]
+          - [Berlin, Rome, 7]
+          - [Paris, Madrid, 3]
+          - [Paris, Rome, 5]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+
+    Safety Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 4]
+          - [Copenhagen, Paris, 5]
+          - [Copenhagen, Madrid, 2]
+          - [Copenhagen, Rome, 5]
+          - [Berlin, Paris, 2]
+          - [Berlin, Madrid, 1/3]
+          - [Berlin, Rome, 1]
+          - [Paris, Madrid, 1/3]
+          - [Paris, Rome, 1/2]
+          - [Madrid, Rome, 3]
+      children: *alternatives
+
+    Health care Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 3]
+          - [Copenhagen, Paris, 1]
+          - [Copenhagen, Madrid, 1/2]
+          - [Copenhagen, Rome, 4]
+          - [Berlin, Paris, 1/3]
+          - [Berlin, Madrid, 1/4]
+          - [Berlin, Rome, 2]
+          - [Paris, Madrid, 1/2]
+          - [Paris, Rome, 4]
+          - [Madrid, Rome, 5]
+      children: *alternatives
+
+    Pollution Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 3]
+          - [Copenhagen, Paris, 7]
+          - [Copenhagen, Madrid, 3]
+          - [Copenhagen, Rome, 5]
+          - [Berlin, Paris, 5]
+          - [Berlin, Madrid, 1]
+          - [Berlin, Rome, 3]
+          - [Paris, Madrid, 1/5]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+'
+writeLines(modelo02, "ej02_ahp.ahp")
+
+
+```
+
+```{r}
+# Cargar el modelo:
+library(ahp)
+ahp_ej_m = ahp::Load("ej02_ahp.ahp")
+ahp_ej_m
+
+# Calcular las prioridades:
+Calculate(ahp_ej_m)
+print(ahp_ej_m, priority = function(x) x$parent$priority["Total", x$name])
+
+# Visualizar la jerarquía
+Visualize(ahp_ej_m)
+
+# Analizar
+Analyze(ahp_ej_m,variable = "priority" ,sort="orig")
+Analyze(ahp_ej_m)
+
+# Analizar con tabla mejorada
+aa = AnalyzeTable(ahp_ej_m)
+formattable::as.htmlwidget(aa)
+
+aa = AnalyzeTable(ahp_ej_m,variable = "priority",sort = "orig")
+formattable::as.htmlwidget(aa)
+```
+
+**Copenhagen** mantiene la primera posición (32.9%), seguida de Madrid (25.7%) y Berlin (19.2%).\
+Este resultado confirma la robustez del modelo: al introducir subcriterios, el ranking global apenas varía respecto al AHP básico.
+
+Las inconsistencias son bajas (\<0.1), lo que garantiza la coherencia y fiabilidad de los juicios emitidos.
+
+Ahora, para validar la solución obtenida, se resuelve el mismo problema utilizando los metodos de superacion.
+
+# Metodo ELECTRE
+
+El método ELECTRE se basa en dos conceptos fundamentales:
+
+-   **Concordancia:** muestra cuanto una opción es al menos tan buena como la otra con la que se compara, considerando los pesos de los criterios.
+
+-   **Discordancia:** evita que una alternativa sea preferida a otra cuando en algún criterio es demasiado desfavorable.
+
+En este trabajo, se ha:
+
+-   fijado un nivel de concordancia mínimo alpha = 0.7
+
+-   elegido pesos para los criterios de forma que se enfatice la sostenibilidad, pero sin ignorar la economia.
+
+-   establecido vetos en los criterios “Safety” y “Pollution”, considerados claves para la sostenibilidad.
+
+## Iteración 1
+
+```{r}
+sol.Electre = multicriterio.metodoELECTRE_I(
+                        nueva.X, 
+                        pesos.criterios = c(0.05, 0.05, 0.10,
+                                            0.25, 0.25, 0.30), 
+                        nivel.concordancia.minimo.alpha = 0.7,
+                        no.se.compensan = c(Inf, Inf, Inf, 0.40, Inf, 0.40),
+                        que.alternativas = TRUE)
+
+qgraph::qgraph(sol.Electre$relacion.dominante)
+sol.Electre$nucleo_aprox
+```
+
+Despues la primera iteracion, se obtiene un nucleo con dos alternativas (Copenhagen y Madrid).
+
+Para intentar quedarse con una única alternativa óptima se puede:
+
+-   reducir el grafo a las alterantivas en el nucleo y/o
+
+-   reducir el valor del alpha \[0.5,1)
+
+## Iteración 2: reducir alternativas
+
+```{r}
+sol.Electre = multicriterio.metodoELECTRE_I(
+                        nueva.X, 
+                        pesos.criterios = c(0.05, 0.05, 0.10,
+                                            0.25, 0.25, 0.30), 
+                        nivel.concordancia.minimo.alpha = 0.7,
+                        no.se.compensan = c(Inf, Inf, Inf, 0.40, Inf, 0.40),
+                        que.alternativas = c(1,4))
+
+qgraph::qgraph(sol.Electre$relacion.dominante)
+sol.Electre$nucleo_aprox
+```
+
+## Iteración 3: reducir alpha
+
+```{r}
+sol.Electre = multicriterio.metodoELECTRE_I(
+                        nueva.X, 
+                        pesos.criterios = c(0.05, 0.05, 0.10,
+                                            0.25, 0.25, 0.30), 
+                        nivel.concordancia.minimo.alpha = 0.6,
+                        no.se.compensan = c(Inf, Inf, Inf, 0.40, Inf, 0.40),
+                        que.alternativas = c(1,4))
+
+qgraph::qgraph(sol.Electre$relacion.dominante)
+sol.Electre$nucleo_aprox
+```
+
+Al reducir el grafo a las alternativas del núcleo no se obtiene una única alternativa, por lo que se reduce el valor de alpha (en este caso hasta 0.6) hasta lograr una sola alternativa óptima, que resulta ser Copenhagen.
+
+El método ELECTRE identifica a **Copenhagen** como la ciudad más sostenible.
+
+# Metodo PROMETHEE
+
+El metodo PROMETHEE se basa en la comparación por pares de alternativas. A diferencia de ELECTRE, no utiliza vetos, porque evalua la preferencia de una alternativa sobra otra mediante funciones especificas definidas para cada critetio. Ademas, permite obtener un ordenamniento parcial (PROMETHEE I) y un ordenamiento total (PROMETHEE II) de las alternativas.
+
+Elección de las funciones de preferencia para los distintos criterios:
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(knitr)
+library(kableExtra)
+
+criterios <- data.frame(
+  Criterio = c("Cost, Rent", "Purchasing Power, Pollution", "Safety, Health Care"),
+  Función = c("Lineal con indiferencia (5)", "Lineal (3)", "Por niveles (4)"),
+  Interpretación = c( "Las pequenas diferencias no tienen peso (q), luego el crecimiento es lineal hasta alcanzar una referencia completa (p).", "Cada diferencia cuenta de forma proporcional hasta llegar a p.", "Por debajo de q hay indiferencia, entre q y p una preferencia débil o constatnte, y por encima de p una preferencia completa.")
+)
+
+kable(criterios, booktabs = TRUE,
+      caption = "Criterios e funciónes asociadas") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                font_size = 9, full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(3, width = "6cm")
+```
+
+## Promethee I:
+
+Primero se aplica el metodo PROMETHEE I, que construye un ordenamiento parcial entre las alternativas. El flujo positivo (phi+) representa el grado en que una ciudad domina a las demás, el flujo negativo (phi-) indica cuánto una ciudad es dominada por las otras. Por tanto, una alternativa con major phi+ y menor phi- se considera mas preferible. El grafo dirigido permite visualizar estas relaciones de dominancia parcial entre las alternativas.
+
+```{r}
+pesos.criterios = pesos.criterios = c(0.05, 0.05, 0.10,
+                                      0.25, 0.25, 0.30);
+tab.fpref = matrix( c(5, 0.05, 0.25, 0,
+                      5, 0.05, 0.25, 0,
+                      3, 0, 0.20, 0,
+                      4, 0.03, 0.15, 0,
+                      4, 0.03, 0.10, 0,
+                      3, 0, 0.15, 0), ncol=4, byrow=T )
+tab.fpref
+
+tab.Pthee.i = multicriterio.metodo.promethee_i(nueva.X, pesos.criterios, tab.fpref)
+tab.Pthee.i
+
+require("qgraph")
+qgraph(tab.Pthee.i$tablarelacionsupera)
+```
+
+En este caso, se observe que **Copenhagen** domina la otras alternativas, mostrando el maximo valor de phi+ y el minimo de phi- .
+
+## Promethee II:
+
+Despues se aplica el metodo PROMETHEE II, que transforma el ordenamiento parcial en un ordenamiento total mediante el flujo neto. El flujo neto se define como la diferencia entre el flujo positivo y el negativo. Este flujo define la posicion global de cada alternativa: cuanto mayor sea el flujo, mejor será la alternativa.
+
+```{r}
+tab.Pthee.ii = multicriterio.metodo.promethee_ii(nueva.X, pesos.criterios, 
+                                                 tab.fpref)
+tab.Pthee.ii
+
+qgraph(tab.Pthee.ii$tablarelacionsupera)
+# ordenacion final alternativas del Metodo Promethee II
+order(tab.Pthee.ii$vflujos.netos, decreasing=T)
+```
+
+Los flujos netos risultan en el siguiente ranking: **Copenhagen**\>Madrid\>Berlin\>Roma\>Paris.
+
+## Promethee I (medias):
+
+En el caso anterior, los flujos se calculaban como sumas, mientras ahora se calculan como el promedio de las preferencias, es decir, se dividen por n-1. Si todo va bien, el orden no cambiará, ya que dividir por n-1 solo normaliza los valores entre 0 y 1.
+
+```{r}
+tab.Pthee.i_med = multicriterio.metodo.promethee_i_med(nueva.X, pesos.criterios, 
+                                                       tab.fpref)
+tab.Pthee.i_med
+
+qgraph(tab.Pthee.i_med$tablarelacionsupera)
+```
+
+## Promethee II (medias):
+
+```{r}
+tab.Pthee.ii_med = multicriterio.metodo.promethee_ii_med(nueva.X, 
+                                      pesos.criterios, tab.fpref)
+tab.Pthee.ii_med
+
+qgraph(tab.Pthee.ii_med$tablarelacionsupera)
+
+# ordenacion final alternativas del Metodo Promethee II
+order(tab.Pthee.ii_med$vflujos.netos, decreasing=T)
+```
+
+**Comparativa Promethee II: sin medias y con medias**
+
+```{r}
+order(tab.Pthee.ii$vflujos.netos, decreasing = T)
+order(tab.Pthee.ii_med$vflujos.netos, decreasing = T)
+```
+
+Se nota que el orden no ha cambiado.
+
+Se conclude que segundo el metodo PROMETHEE, **Copenhagen** es la mejor opcion.
+
+# Conclusión
+
+Los tres métodos aplicados (AHP, ELECTRE, PROMETHEE) coincidieron en identificar **Copenhagen** como la **ciudad más sostenible para vivir**, reforzando así la robustez y consistencia de la decision multicriterio.
+
+En PROMETHEE y ELECTRE se han utilizado pesos diferentes a los de AHP para evaluar la robustez de la decisión y priorizar más los criterios de sostenibilidad y bienestar (Safety, Health Care, Pollution), reduciendo el peso de los aspectos económicos (Cost of Living, Rent, Purchasing Power).

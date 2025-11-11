@@ -1,0 +1,143 @@
+
+Version: 2.0
+
+Alternatives: &alternatives
+  Copenhagen:
+  Berlin:
+  Paris:
+  Madrid:
+  Rome:
+
+Goal:
+  name: Elegir la ciudad europea más sostenible para vivir
+  preferences:
+    pairwise:
+      - [Cost of Living Index, Rent Index, 2]
+      - [Cost of Living Index, Purchasing Power Index, 1/2]
+      - [Cost of Living Index, Safety Index, 1/2]
+      - [Cost of Living Index, Health care Index, 1/2]
+      - [Cost of Living Index, Pollution Index, 1/3]
+      - [Rent Index, Purchasing Power Index, 1/3]
+      - [Rent Index, Safety Index, 1/4]
+      - [Rent Index, Health care Index, 1/4]
+      - [Rent Index, Pollution Index, 1/6]
+      - [Purchasing Power Index, Safety Index, 1/2]
+      - [Purchasing Power Index, Health care Index, 1/2]
+      - [Purchasing Power Index, Pollution Index, 1/2]
+      - [Safety Index, Health care Index, 1]
+      - [Safety Index, Pollution Index, 1/2]
+      - [Health care Index, Pollution Index, 1]
+
+  children:
+
+    Cost of Living Index:
+      preferences:
+        pairwise:
+          - [Groceries Index, Restaurants Index, 2]
+      children:
+
+        Groceries Index:
+          preferences:
+            pairwise:
+              - [Copenhagen, Berlin, 1/3]
+              - [Copenhagen, Paris, 1]
+              - [Copenhagen, Madrid, 1/5]
+              - [Copenhagen, Rome, 1/3]
+              - [Berlin, Paris, 3]
+              - [Berlin, Madrid, 1/3]
+              - [Berlin, Rome, 1]
+              - [Paris, Madrid, 1/5]
+              - [Paris, Rome, 1/3]
+              - [Madrid, Rome, 3]
+          children: *alternatives
+
+        Restaurants Index:
+          preferences:
+            pairwise:
+              - [Copenhagen, Berlin, 1/5]
+              - [Copenhagen, Paris, 1/4]
+              - [Copenhagen, Madrid, 1/7]
+              - [Copenhagen, Rome, 1/6]
+              - [Berlin, Paris, 2]
+              - [Berlin, Madrid, 1/3]
+              - [Berlin, Rome, 1/2]
+              - [Paris, Madrid, 1/4]
+              - [Paris, Rome, 1/3]
+              - [Madrid, Rome, 2]
+          children: *alternatives
+
+    Rent Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/3]
+          - [Copenhagen, Paris, 1/2]
+          - [Copenhagen, Madrid, 1/3]
+          - [Copenhagen, Rome, 1/4]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 2]
+          - [Berlin, Rome, 1/2]
+          - [Paris, Madrid, 1/2]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 1/2]
+      children: *alternatives
+
+    Purchasing Power Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 1/2]
+          - [Copenhagen, Paris, 2]
+          - [Copenhagen, Madrid, 5]
+          - [Copenhagen, Rome, 6]
+          - [Berlin, Paris, 3]
+          - [Berlin, Madrid, 6]
+          - [Berlin, Rome, 7]
+          - [Paris, Madrid, 3]
+          - [Paris, Rome, 5]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+
+    Safety Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 4]
+          - [Copenhagen, Paris, 5]
+          - [Copenhagen, Madrid, 2]
+          - [Copenhagen, Rome, 5]
+          - [Berlin, Paris, 2]
+          - [Berlin, Madrid, 1/3]
+          - [Berlin, Rome, 1]
+          - [Paris, Madrid, 1/3]
+          - [Paris, Rome, 1/2]
+          - [Madrid, Rome, 3]
+      children: *alternatives
+
+    Health care Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 3]
+          - [Copenhagen, Paris, 1]
+          - [Copenhagen, Madrid, 1/2]
+          - [Copenhagen, Rome, 4]
+          - [Berlin, Paris, 1/3]
+          - [Berlin, Madrid, 1/4]
+          - [Berlin, Rome, 2]
+          - [Paris, Madrid, 1/2]
+          - [Paris, Rome, 4]
+          - [Madrid, Rome, 5]
+      children: *alternatives
+
+    Pollution Index:
+      preferences:
+        pairwise:
+          - [Copenhagen, Berlin, 3]
+          - [Copenhagen, Paris, 7]
+          - [Copenhagen, Madrid, 3]
+          - [Copenhagen, Rome, 5]
+          - [Berlin, Paris, 5]
+          - [Berlin, Madrid, 1]
+          - [Berlin, Rome, 3]
+          - [Paris, Madrid, 1/5]
+          - [Paris, Rome, 1/3]
+          - [Madrid, Rome, 2]
+      children: *alternatives
+
